@@ -47,7 +47,7 @@ import org.apache.http.conn.ManagedClientConnection;
 import org.apache.http.conn.OperatedClientConnection;
 import org.apache.http.params.HttpParams;
 import org.apache.http.impl.conn.DefaultClientConnectionOperator;
-
+import org.apache.http.impl.conn.TcmIdleTimerMonitor;
 
 
 /**
@@ -84,8 +84,8 @@ public class ThreadSafeClientConnManager implements ClientConnectionManager {
     /** The operator for opening and updating connections. */
     protected ClientConnectionOperator connOperator;
     
-
-
+    /** The operator for monitoring idle connections. */
+    private TcmIdleTimerMonitor mIdleMonitor;
     /**
      * Creates a new thread safe connection manager.
      *
@@ -101,7 +101,7 @@ public class ThreadSafeClientConnManager implements ClientConnectionManager {
         this.schemeRegistry = schreg;
         this.connOperator   = createConnectionOperator(schreg);
         this.connectionPool = createConnectionPool(params);
-
+        mIdleMonitor = new TcmIdleTimerMonitor(this);
     } // <constructor>
 
     
