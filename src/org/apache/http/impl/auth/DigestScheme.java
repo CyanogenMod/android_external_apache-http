@@ -35,6 +35,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.apache.http.Header;
 import org.apache.http.HttpRequest;
 import org.apache.http.auth.AuthenticationException;
@@ -93,9 +96,10 @@ public class DigestScheme extends RFC2617Scheme {
      * @see #encode(byte[])
      */
     private static final char[] HEXADECIMAL = {
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd',
         'e', 'f'
     };
+    private final Log log = LogFactory.getLog(getClass());
     
     /** Whether the digest authentication process is complete */
     private boolean complete;
@@ -109,12 +113,20 @@ public class DigestScheme extends RFC2617Scheme {
     private int qopVariant = QOP_MISSING;
     private String cnonce;
 
+    private static final String gbaToken = "3GPP-bootstrapping";
+    private boolean gbaScheme = false;
+    private String SSLCipherSuite = null;
+    private String nafName = null;
+
+    private GbaCredentialsCreator gcp = null;
+
     /**
      * Default constructor for the digest authetication scheme.
      */
     public DigestScheme() {
         super();
         this.complete = false;
+        gcp = GbaCredentialsCreator.getInstance();
     }
 
     /**
@@ -161,6 +173,7 @@ public class DigestScheme extends RFC2617Scheme {
         // Reset cnonce
         this.cnonce = null;
         this.complete = true;
+        this.gbaScheme = isGbaScheme();
     }
 
     /**
@@ -176,6 +189,31 @@ public class DigestScheme extends RFC2617Scheme {
         } else {
             return this.complete;
         }
+    }
+
+    /**
+     * Tests if this packet is gba related.
+     *
+     * @return <tt>true</tt> if this packet is gba related,
+     *   <tt>false</tt> otherwise.
+     */
+    /**@hide */
+    public boolean isGbaScheme() {
+        String s = getParameter("realm");
+        String delim = "[@]";
+        String[] words = s.split(delim);
+        boolean rv = false;
+        if(words[0].equals(gbaToken)){
+            rv = true;
+            nafName = new String(words[1]);
+        }
+        this.log.debug("realm:"+words[0]+","+words[1]);
+        return rv;
+    }
+
+    /**@hide */
+    public void setSSLCipherSuite(String cipherSuite) {
+        this.SSLCipherSuite = cipherSuite;
     }
 
     /**
@@ -231,7 +269,12 @@ public class DigestScheme extends RFC2617Scheme {
         if (request == null) {
             throw new IllegalArgumentException("HTTP request may not be null");
         }
-        
+        Credentials useCred = credentials;
+
+        if(gbaScheme) {
+            useCred = gcp.getUsernamePassword(nafName,SSLCipherSuite);
+        }
+
         // Add method name and request-URI to the parameter map
         getParameters().put("methodname", request.getRequestLine().getMethod());
         getParameters().put("uri", request.getRequestLine().getUri());
@@ -240,10 +283,10 @@ public class DigestScheme extends RFC2617Scheme {
             charset = AuthParams.getCredentialCharset(request.getParams());
             getParameters().put("charset", charset);
         }
-        String digest = createDigest(credentials);
-        return createDigestHeader(credentials, digest);
+        String digest = createDigest(useCred);
+        return createDigestHeader(useCred, digest);
     }
-    
+
     private static MessageDigest createMessageDigest(
             final String digAlg) throws UnsupportedDigestAlgorithmException {
         try {

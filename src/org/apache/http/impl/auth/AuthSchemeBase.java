@@ -129,5 +129,16 @@ public abstract class AuthSchemeBase implements AuthScheme {
     public boolean isProxy() {
         return this.proxy;
     }
-    
+
+    /**
+     * returns <code>true</code> if the packet is gba related, <code>false</code>
+     * otherwise.
+     *
+     * @return <code>true</code> if the packet is gba related, <code>false</code>
+     * otherwise
+     */
+    /**@hide */
+    public boolean isGbaScheme() {
+        return false;
+    }
 }

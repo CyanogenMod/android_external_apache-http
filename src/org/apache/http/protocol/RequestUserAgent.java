@@ -37,6 +37,7 @@ import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.params.HttpProtocolParams;
+import org.apache.http.impl.auth.GbaCredentialsCreator;
 
 /**
  * A request interceptor that adds a User-Agent header.
@@ -54,19 +55,38 @@ import org.apache.http.params.HttpProtocolParams;
 @Deprecated
 public class RequestUserAgent implements HttpRequestInterceptor {
 
+    private GbaCredentialsCreator gcp = null;
+
     public RequestUserAgent() {
         super();
+        gcp = GbaCredentialsCreator.getInstance();
     }
-    
-    public void process(final HttpRequest request, final HttpContext context) 
+
+    public void process(final HttpRequest request, final HttpContext context)
         throws HttpException, IOException {
         if (request == null) {
             throw new IllegalArgumentException("HTTP request may not be null");
         }
+
+        String gbaUserAgent = gcp.getGbaUserAgent();
         if (!request.containsHeader(HTTP.USER_AGENT)) {
             String useragent = HttpProtocolParams.getUserAgent(request.getParams());
-            if (useragent != null) {
-                request.addHeader(HTTP.USER_AGENT, useragent);
+            StringBuilder sb = new StringBuilder();
+            if (useragent != null) sb.append(useragent);
+            if (gbaUserAgent != null) {
+                if (useragent != null) sb.append("; ");
+                sb.append(gbaUserAgent);
+            }
+            if(useragent != null || gbaUserAgent != null) request.addHeader(HTTP.USER_AGENT, sb.toString());
+        } else {
+            String useragent = request.getFirstHeader(HTTP.USER_AGENT).getValue();
+            boolean isGbaSet = useragent.contains("3gpp-gba");
+            if(gbaUserAgent != null && !isGbaSet) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(useragent);
+                sb.append("; ");
+                sb.append(gbaUserAgent);
+                request.setHeader(HTTP.USER_AGENT,sb.toString());
             }
         }
     }
