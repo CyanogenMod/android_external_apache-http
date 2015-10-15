@@ -65,7 +65,7 @@ apache_http_packages := $(strip \
 include $(CLEAR_VARS)
 LOCAL_MODULE := org.apache.http.legacy.boot
 LOCAL_MODULE_TAGS := optional
-LOCAL_JAVA_LIBRARIES := $(apache_http_java_libs) tcmiface
+LOCAL_JAVA_LIBRARIES := $(apache_http_java_libs)
 LOCAL_SRC_FILES := $(apache_http_src_files)
 LOCAL_SDK_VERSION := 21
 LOCAL_MODULE_TAGS := optional
@@ -92,14 +92,12 @@ LOCAL_MODULE := apache-http-stubs-gen
 include $(BUILD_DROIDDOC)
 apache_http_stubs_gen_stamp := $(full_target)
 
-# For unbundled build we'll use the prebuilt jar from prebuilts/sdk.
-ifeq (,$(TARGET_BUILD_APPS))
 ###############################################
 # Build the stub source files into a jar.
 include $(CLEAR_VARS)
 LOCAL_MODULE := org.apache.http.legacy
+LOCAL_JAVA_LIBRARIES := $(apache_http_java_libs)
 LOCAL_SOURCE_FILES_ALL_GENERATED := true
-LOCAL_SDK_VERSION := 21
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
 # Make sure to run droiddoc first to generate the stub source files.
@@ -108,7 +106,6 @@ $(full_classes_jack) : $(apache_http_stubs_gen_stamp)
 
 # Archive a copy of the classes.jar in SDK build.
 $(call dist-for-goals,sdk win_sdk,$(full_classes_jar):org.apache.http.legacy.jar)
-endif  # not TARGET_BUILD_APPS
 
 apache_http_src_files :=
 apache_http_java_libs :=
