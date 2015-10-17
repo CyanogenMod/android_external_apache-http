@@ -65,7 +65,7 @@ apache_http_packages := $(strip \
 include $(CLEAR_VARS)
 LOCAL_MODULE := org.apache.http.legacy.boot
 LOCAL_MODULE_TAGS := optional
-LOCAL_JAVA_LIBRARIES := $(apache_http_java_libs) tcmiface
+LOCAL_JAVA_LIBRARIES := $(apache_http_java_libs)
 LOCAL_SRC_FILES := $(apache_http_src_files)
 LOCAL_SDK_VERSION := 21
 LOCAL_MODULE_TAGS := optional
