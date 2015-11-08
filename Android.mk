@@ -18,7 +18,7 @@ apache_http_src_files := \
     $(call all-java-files-under,src) \
     $(call all-java-files-under,android)
 
-apache_http_java_libs := conscrypt tcmiface
+apache_http_java_libs := conscrypt
 
 apache_http_packages := $(strip \
   com.android.internal.http.multipart \
@@ -65,7 +65,8 @@ apache_http_packages := $(strip \
 include $(CLEAR_VARS)
 LOCAL_MODULE := org.apache.http.legacy.boot
 LOCAL_MODULE_TAGS := optional
-LOCAL_JAVA_LIBRARIES := $(apache_http_java_libs) tcmiface
+LOCAL_JAVA_LIBRARIES := $(apache_http_java_libs)
+LOCAL_STATIC_JAVA_LIBRARIES := tcmiface
 LOCAL_SRC_FILES := $(apache_http_src_files)
 LOCAL_SDK_VERSION := 21
 LOCAL_MODULE_TAGS := optional
@@ -75,7 +76,7 @@ include $(BUILD_JAVA_LIBRARY)
 # Generate the stub source files
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := $(apache_http_src_files)
-LOCAL_JAVA_LIBRARIES := $(apache_http_java_libs)
+LOCAL_JAVA_LIBRARIES := $(apache_http_java_libs) tcmiface
 LOCAL_MODULE_CLASS := JAVA_LIBRARIES
 LOCAL_DROIDDOC_SOURCE_PATH := $(LOCAL_PATH)/src \
   $(LOCAL_PATH)/android
@@ -99,6 +100,7 @@ ifeq (,$(TARGET_BUILD_APPS))
 include $(CLEAR_VARS)
 LOCAL_MODULE := org.apache.http.legacy
 LOCAL_SOURCE_FILES_ALL_GENERATED := true
+LOCAL_JAVA_LIBRARIES := tcmiface
 LOCAL_SDK_VERSION := 21
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
