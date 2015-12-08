@@ -98,6 +98,7 @@ import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpRequestExecutor;
 import org.apache.http.impl.auth.DigestScheme;
 
+
 /**
  * Default implementation of {@link RequestDirector}.
  * <br/>
@@ -137,19 +138,19 @@ public class DefaultRequestDirector implements RequestDirector {
 
     /** The HTTP protocol processor. */
     protected final HttpProcessor httpProcessor;
-    
+
     /** The request retry handler. */
     protected final HttpRequestRetryHandler retryHandler;
-    
+
     /** The redirect handler. */
     protected final RedirectHandler redirectHandler;
-    
+
     /** The target authentication handler. */
     private final AuthenticationHandler targetAuthHandler;
-    
+
     /** The proxy authentication handler. */
     private final AuthenticationHandler proxyAuthHandler;
-    
+
     /** The user token handler. */
     private final UserTokenHandler userTokenHandler;
     
@@ -920,13 +921,12 @@ public class DefaultRequestDirector implements RequestDirector {
                                            HttpResponse response,
                                            HttpContext context)
         throws HttpException, IOException {
-
         HttpRoute route = roureq.getRoute();
         HttpHost proxy = route.getProxyHost();
         RequestWrapper request = roureq.getRequest();
-        
+
         HttpParams params = request.getParams();
-        if (HttpClientParams.isRedirecting(params) && 
+        if (HttpClientParams.isRedirecting(params) &&
                 this.redirectHandler.isRedirectRequested(response, context)) {
 
             if (redirectCount >= maxRedirects) {
@@ -936,6 +936,21 @@ public class DefaultRequestDirector implements RequestDirector {
             redirectCount++;
             
             URI uri = this.redirectHandler.getLocationURI(response, context);
+
+            /*
+             * When SIM reaches zero balance all http traffic gets redirected
+             * to recharge url and all traffic need to be blocked.
+             * So redirect count is maintained.
+             * If feature is disabled or data traffic is already blocked
+             * no need to check for redirection.
+             */
+            if (ZeroBalanceHelperClass.getFeatureFlagValue() &&
+                    (!ZeroBalanceHelperClass.getBackgroundDataProperty())) {
+                Header locationHeader = response.getFirstHeader("location");
+                String location = locationHeader.getValue();
+                ZeroBalanceHelperClass.setHttpRedirectCount(location);
+                this.log.error("zerobalance::Apachehttp:Redirect count set " );
+            }
 
             HttpHost newTarget = new HttpHost(
                     uri.getHost(), 
