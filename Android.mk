@@ -18,7 +18,7 @@ apache_http_src_files := \
     $(call all-java-files-under,src) \
     $(call all-java-files-under,android)
 
-apache_http_java_libs := conscrypt
+apache_http_java_libs := conscrypt tcmiface
 
 apache_http_packages := $(strip \
   com.android.internal.http.multipart \
